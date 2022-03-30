@@ -138,9 +138,12 @@ class Blockchain {
 
       console.log("The signature is valid");
 
-      const block = new BlockClass.Block(star);
+      const block = new BlockClass.Block({ star, address });
       const added = await self._addBlock(block);
       const errors = await this.validateChain();
+      if (errors.length > 0) {
+        reject(new Error(errors));
+      }
       resolve(added);
     });
 
@@ -191,13 +194,15 @@ class Blockchain {
    */
   getStarsByWalletAddress(address) {
     let self = this;
-    return new Promise((resolve, reject) => {
-      resolve(
-        self.chain
-          .map(async (b) => await b.getBData())
-          .filter((b) => b.address === address)
-          .map((b) => ({ star: b.star, owner: b.address }))
-      );
+    return new Promise(async (resolve, reject) => {
+      const blockDataPromises = self.chain.map((b) => b.getBData());
+      const blockData = await Promise.all(blockDataPromises);
+      const blocksWithAddress = blockData.filter((b) => b.address === address);
+      const stars = blocksWithAddress.map((b) => ({
+        star: b.star,
+        owner: b.address,
+      }));
+      resolve(stars);
     });
   }
 
@@ -231,7 +236,7 @@ class Blockchain {
         resolve(`Block #${block.height} has an invalid previousBlockHash.`);
       }
 
-      if (block.hash !== SHA256(JSON.stringify(block)).toString()) {
+      if (!block.validate()) {
         resolve(`Block #${block.height} has an invalid hash.`);
       }
 
