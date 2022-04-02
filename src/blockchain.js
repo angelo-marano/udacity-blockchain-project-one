@@ -122,7 +122,12 @@ class Blockchain {
     let self = this;
 
     return new Promise(async (resolve, reject) => {
-      const time = parseInt(message.split(":")[1]);
+      const messageParts = message.split(":");
+      if (messageParts.length !== 3) {
+        reject("Invalid message format");
+      }
+
+      const time = parseInt(messageParts[1]);
       const timeElapsed = getElapsedTime(time);
       if (timeElapsed >= 5 * 60 * 1000) {
         console.error("Time elapsed is greater than 5 minutes");
