@@ -77,7 +77,10 @@ class Blockchain {
 
         self.chain.push(block);
         self.height++;
-
+        const validation = await this.validateChain();
+        if (validation.length) {
+          reject(validation);
+        }
         resolve(block);
       } catch (error) {
         reject(error);
